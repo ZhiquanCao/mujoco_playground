@@ -28,7 +28,6 @@ from mujoco import mjx
 import numpy as np
 import tqdm
 
-
 # Root path is used for loading XML strings directly using etils.epath.
 ROOT_PATH = epath.Path(__file__).parent
 # Base directory for external dependencies.
@@ -36,9 +35,13 @@ EXTERNAL_DEPS_PATH = epath.Path(__file__).parent.parent / "external_deps"
 # The menagerie path is used to load robot assets.
 # Resource paths do not have glob implemented, so we use a bare epath.Path.
 MENAGERIE_PATH = EXTERNAL_DEPS_PATH / "mujoco_menagerie"
+# Commit SHA of the menagerie repo.
+MENAGERIE_COMMIT_SHA = "14ceccf557cc47240202f2354d684eca58ff8de4"
 
 
-def _clone_with_progress(repo_url: str, target_path: str) -> None:
+def _clone_with_progress(
+    repo_url: str, target_path: str, commit_sha: str
+) -> None:
   """Clone a git repo with progress bar."""
   process = subprocess.Popen(
       ["git", "clone", "--progress", repo_url, target_path],
@@ -75,6 +78,15 @@ def _clone_with_progress(repo_url: str, target_path: str) -> None:
   if process.returncode != 0:
     raise subprocess.CalledProcessError(process.returncode, ["git", "clone"])
 
+  # Checkout specific commit.
+  print(f"Checking out commit {commit_sha}")
+  subprocess.run(
+      ["git", "-C", target_path, "checkout", commit_sha],
+      check=True,
+      stdout=subprocess.PIPE,
+      stderr=subprocess.PIPE,
+  )
+
 
 def ensure_menagerie_exists() -> None:
   """Ensure mujoco_menagerie exists, downloading it if necessary."""
@@ -88,6 +100,7 @@ def ensure_menagerie_exists() -> None:
       _clone_with_progress(
           "https://github.com/deepmind/mujoco_menagerie.git",
           str(MENAGERIE_PATH),
+          MENAGERIE_COMMIT_SHA,
       )
       print("Successfully downloaded mujoco_menagerie")
     except subprocess.CalledProcessError as e:
@@ -135,9 +148,9 @@ def init(
   if act is not None:
     data = data.replace(act=act)
   if mocap_pos is not None:
-    data = data.replace(mocap_pos=mocap_pos.reshape(1, -1))
+    data = data.replace(mocap_pos=mocap_pos.reshape(model.nmocap, -1))
   if mocap_quat is not None:
-    data = data.replace(mocap_quat=mocap_quat.reshape(1, -1))
+    data = data.replace(mocap_quat=mocap_quat.reshape(model.nmocap, -1))
   data = mjx.forward(model, data)
   return data
 
@@ -257,12 +270,11 @@ class MjxEnv(abc.ABC):
 
   @property
   def observation_size(self) -> ObservationSize:
-    rng = jax.random.PRNGKey(0)
-    reset_state = self.unwrapped.reset(rng)
-    obs = reset_state.obs
-    if isinstance(obs, jax.Array):
-      return obs.shape[-1]
-    return jax.tree_util.tree_map(lambda x: x.shape, obs)
+    abstract_state = jax.eval_shape(self.reset, jax.random.PRNGKey(0))
+    obs = abstract_state.obs
+    if isinstance(obs, Mapping):
+      return jax.tree_util.tree_map(lambda x: x.shape, obs)
+    return obs.shape[-1]
 
   def render(
       self,

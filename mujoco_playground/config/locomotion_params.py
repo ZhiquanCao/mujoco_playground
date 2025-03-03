@@ -117,6 +117,23 @@ def brax_ppo_config(env_name: str) -> config_dict.ConfigDict:
         policy_obs_key="state",
         value_obs_key="privileged_state",
     )
+
+  elif env_name in (
+      "T1JoystickFlatTerrain",
+      "T1JoystickRoughTerrain",
+  ):
+    rl_config.num_timesteps = 200_000_000
+    rl_config.num_evals = 20
+    rl_config.clipping_epsilon = 0.2
+    rl_config.num_resets_per_eval = 1
+    rl_config.entropy_cost = 0.005
+    rl_config.network_factory = config_dict.create(
+        policy_hidden_layer_sizes=(512, 256, 128),
+        value_hidden_layer_sizes=(512, 256, 128),
+        policy_obs_key="state",
+        value_obs_key="privileged_state",
+    )
+
   elif env_name in (
       "BarkourJoystick",
       "H1InplaceGaitTracking",
@@ -143,7 +160,8 @@ def rsl_rl_config(env_name: str) -> config_dict.ConfigDict:
           init_noise_std=1.0,
           actor_hidden_dims=[512, 256, 128],
           critic_hidden_dims=[512, 256, 128],
-          activation="elu",  # can be elu, relu, selu, crelu, lrelu, tanh, sigmoid
+          # can be elu, relu, selu, crelu, lrelu, tanh, sigmoid
+          activation="elu",
           class_name="ActorCritic",
       ),
       algorithm=config_dict.create(
@@ -153,7 +171,8 @@ def rsl_rl_config(env_name: str) -> config_dict.ConfigDict:
           clip_param=0.2,
           entropy_coef=0.001,
           num_learning_epochs=5,
-          num_mini_batches=4,  # mini batch size = num_envs*nsteps / nminibatches
+          # mini batch size = num_envs*nsteps / nminibatches
+          num_mini_batches=4,
           learning_rate=3.0e-4,  # 5.e-4
           schedule="fixed",  # could be adaptive, fixed
           gamma=0.99,

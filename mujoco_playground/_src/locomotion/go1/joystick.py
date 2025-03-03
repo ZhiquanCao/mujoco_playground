@@ -362,7 +362,7 @@ class Joystick(go1_base.Go1Env):
         linvel,  # 3
         angvel,  # 3
         joint_angles - self._default_pose,  # 12
-        noisy_joint_vel,  # 12
+        joint_vel,  # 12
         data.actuator_force,  # 12
         info["last_contact"],  # 4
         feet_vel,  # 4*3
@@ -599,10 +599,3 @@ class Joystick(go1_base.Go1Env):
     w_k = jax.random.bernoulli(w_rng, 0.5, shape=(3,))
     x_kp1 = x_k - w_k * (x_k - y_k * z_k)
     return x_kp1
-
-  @property
-  def observation_size(self) -> mjx_env.ObservationSize:
-    return {
-        "state": (48,),
-        "privileged_state": (123,),
-    }

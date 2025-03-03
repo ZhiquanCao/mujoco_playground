@@ -19,8 +19,8 @@ from typing import Any, Dict, Optional, Union
 import jax
 import jax.numpy as jp
 from ml_collections import config_dict
-import mujoco
 from mujoco import mjx
+import mujoco  # pylint: disable=unused-import
 from mujoco.mjx._src import math
 
 from mujoco_playground._src import collision
@@ -213,7 +213,3 @@ class PandaOpenCabinet(panda.PandaBase):
     ])
 
     return obs
-
-  @property
-  def observation_size(self) -> mjx_env.ObservationSize:
-    return 55

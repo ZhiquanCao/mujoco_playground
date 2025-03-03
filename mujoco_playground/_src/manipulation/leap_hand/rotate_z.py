@@ -23,7 +23,6 @@ from mujoco import mjx
 import numpy as np
 
 from mujoco_playground._src import mjx_env
-from mujoco_playground._src import reward
 from mujoco_playground._src.manipulation.leap_hand import base as leap_hand_base
 from mujoco_playground._src.manipulation.leap_hand import leap_hand_constants as consts
 
@@ -145,7 +144,7 @@ class CubeRotateZAxis(leap_hand_base.LeapHandEnv):
     rewards = {
         k: v * self._config.reward_config.scales[k] for k, v in rewards.items()
     }
-    reward = sum(rewards.values()) * self.dt
+    reward = sum(rewards.values()) * self.dt  # pylint: disable=redefined-outer-name
 
     state.info["last_last_act"] = state.info["last_act"]
     state.info["last_act"] = action
@@ -260,10 +259,6 @@ class CubeRotateZAxis(leap_hand_base.LeapHandEnv):
 
   def _cost_pose(self, joint_angles: jax.Array) -> jax.Array:
     return jp.sum(jp.square(joint_angles - self._default_pose))
-
-  @property
-  def observation_size(self) -> mjx_env.ObservationSize:
-    return {"privileged_state": (105,), "state": (32,)}
 
 
 def domain_randomize(model: mjx.Model, rng: jax.Array):

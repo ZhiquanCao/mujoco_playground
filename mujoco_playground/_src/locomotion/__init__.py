@@ -37,6 +37,8 @@ from mujoco_playground._src.locomotion.op3 import joystick as op3_joystick
 from mujoco_playground._src.locomotion.spot import getup as spot_getup
 from mujoco_playground._src.locomotion.spot import joystick as spot_joystick
 from mujoco_playground._src.locomotion.spot import joystick_gait_tracking as spot_joystick_gait_tracking
+from mujoco_playground._src.locomotion.t1 import joystick as t1_joystick
+from mujoco_playground._src.locomotion.t1 import randomize as t1_randomize
 
 _envs = {
     "BarkourJoystick": barkour_joystick.Joystick,
@@ -71,6 +73,12 @@ _envs = {
     "SpotJoystickGaitTracking": (
         spot_joystick_gait_tracking.JoystickGaitTracking
     ),
+    "T1JoystickFlatTerrain": functools.partial(
+        t1_joystick.Joystick, task="flat_terrain"
+    ),
+    "T1JoystickRoughTerrain": functools.partial(
+        t1_joystick.Joystick, task="rough_terrain"
+    ),
 }
 
 _cfgs = {
@@ -94,6 +102,8 @@ _cfgs = {
     "SpotFlatTerrainJoystick": spot_joystick.default_config,
     "SpotGetup": spot_getup.default_config,
     "SpotJoystickGaitTracking": spot_joystick_gait_tracking.default_config,
+    "T1JoystickFlatTerrain": t1_joystick.default_config,
+    "T1JoystickRoughTerrain": t1_joystick.default_config,
 }
 
 _randomizer = {
@@ -110,9 +120,15 @@ _randomizer = {
     "Go1Getup": go1_randomize.domain_randomize,
     "Go1Handstand": go1_randomize.domain_randomize,
     "Go1Footstand": go1_randomize.domain_randomize,
+    "T1JoystickFlatTerrain": t1_randomize.domain_randomize,
+    "T1JoystickRoughTerrain": t1_randomize.domain_randomize,
 }
 
-ALL = list(_envs.keys())
+
+def __getattr__(name):
+  if name == "ALL_ENVS":
+    return tuple(_envs.keys())
+  raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
 
 def register_environment(
@@ -158,7 +174,7 @@ def load(
       An instance of the environment.
   """
   if env_name not in _envs:
-    raise ValueError(f"Env '{env_name}' not found. Available envs: {ALL}")
+    raise ValueError(f"Env '{env_name}' not found. Available envs: {_cfgs.keys()}")
   config = config or get_default_config(env_name)
   return _envs[env_name](config=config, config_overrides=config_overrides)
 

@@ -14,18 +14,12 @@
 # ==============================================================================
 """Train a PPO agent using JAX on the specified environment."""
 
-import os
-
-xla_flags = os.environ.get("XLA_FLAGS", "")
-xla_flags += " --xla_gpu_triton_gemm_any=True"
-os.environ["XLA_FLAGS"] = xla_flags
-os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
-os.environ["MUJOCO_GL"] = "egl"
-
 from datetime import datetime
 import functools
 import json
+import os
 import time
+import warnings
 
 from absl import app
 from absl import flags
@@ -39,7 +33,6 @@ import jax
 import jax.numpy as jp
 import mediapy as media
 from ml_collections import config_dict
-from ml_collections import config_flags
 import mujoco
 from orbax import checkpoint as ocp
 from tensorboardX import SummaryWriter
@@ -52,11 +45,16 @@ from mujoco_playground.config import dm_control_suite_params
 from mujoco_playground.config import locomotion_params
 from mujoco_playground.config import manipulation_params
 
+xla_flags = os.environ.get("XLA_FLAGS", "")
+xla_flags += " --xla_gpu_triton_gemm_any=True"
+os.environ["XLA_FLAGS"] = xla_flags
+os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
+os.environ["MUJOCO_GL"] = "egl"
+
 # Ignore the info logs from brax
 logging.set_verbosity(logging.WARNING)
 
 # Suppress warnings
-import warnings
 
 # Suppress RuntimeWarnings from JAX
 warnings.filterwarnings("ignore", category=RuntimeWarning, module="jax")
@@ -165,6 +163,8 @@ def main(argv):
 
   if _NUM_TIMESTEPS.present:
     ppo_params.num_timesteps = _NUM_TIMESTEPS.value
+  if _PLAY_ONLY.present:
+    ppo_params.num_timesteps = 0
   if _NUM_EVALS.present:
     ppo_params.num_evals = _NUM_EVALS.value
   if _REWARD_SCALING.present:
@@ -198,12 +198,12 @@ def main(argv):
   if _CLIPPING_EPSILON.present:
     ppo_params.clipping_epsilon = _CLIPPING_EPSILON.value
   if _POLICY_HIDDEN_LAYER_SIZES.present:
-    ppo_params.network_factory.policy_hidden_layer_sizes = tuple(
-        _POLICY_HIDDEN_LAYER_SIZES.value
+    ppo_params.network_factory.policy_hidden_layer_sizes = list(
+        map(int, _POLICY_HIDDEN_LAYER_SIZES.value)
     )
   if _VALUE_HIDDEN_LAYER_SIZES.present:
-    ppo_params.network_factory.value_hidden_layer_sizes = tuple(
-        _VALUE_HIDDEN_LAYER_SIZES.value
+    ppo_params.network_factory.value_hidden_layer_sizes = list(
+        map(int, _VALUE_HIDDEN_LAYER_SIZES.value)
     )
   if _POLICY_OBS_KEY.present:
     ppo_params.network_factory.policy_obs_key = _POLICY_OBS_KEY.value
@@ -244,18 +244,16 @@ def main(argv):
   # Handle checkpoint loading
   if _LOAD_CHECKPOINT_PATH.value is not None:
     # Convert to absolute path
-    _LOAD_CHECKPOINT_PATH.value = epath.Path(
-        _LOAD_CHECKPOINT_PATH.value
-    ).resolve()
-    if _LOAD_CHECKPOINT_PATH.value.is_dir():
-      latest_ckpts = list(_LOAD_CHECKPOINT_PATH.value.glob("*"))
+    ckpt_path = epath.Path(_LOAD_CHECKPOINT_PATH.value).resolve()
+    if ckpt_path.is_dir():
+      latest_ckpts = list(ckpt_path.glob("*"))
       latest_ckpts = [ckpt for ckpt in latest_ckpts if ckpt.is_dir()]
       latest_ckpts.sort(key=lambda x: int(x.name))
       latest_ckpt = latest_ckpts[-1]
       restore_checkpoint_path = latest_ckpt
       print(f"Restoring from: {restore_checkpoint_path}")
     else:
-      restore_checkpoint_path = _LOAD_CHECKPOINT_PATH.value
+      restore_checkpoint_path = ckpt_path
       print(f"Restoring from checkpoint: {restore_checkpoint_path}")
   else:
     print("No checkpoint path provided, not restoring from checkpoint")
@@ -267,11 +265,11 @@ def main(argv):
   print(f"Checkpoint path: {ckpt_path}")
 
   # Save environment configuration
-  with open(ckpt_path / "config.json", "w") as fp:
-    json.dump(env_cfg.to_json(), fp, indent=4)
+  with open(ckpt_path / "config.json", "w", encoding="utf-8") as fp:
+    json.dump(env_cfg.to_dict(), fp, indent=4)
 
   # Define policy parameters function for saving checkpoints
-  def policy_params_fn(current_step, make_policy, params):
+  def policy_params_fn(current_step, make_policy, params):  # pylint: disable=unused-argument
     orbax_checkpointer = ocp.PyTreeCheckpointer()
     save_args = orbax_utils.save_args_from_target(params)
     path = ckpt_path / f"{current_step}"
@@ -352,7 +350,7 @@ def main(argv):
   )
 
   # Train or load the model
-  make_inference_fn, params, _ = train_fn(
+  make_inference_fn, params, _ = train_fn(  # pylint: disable=no-value-for-parameter
       environment=env,
       progress_fn=progress,
       eval_env=None if _VISION.value else eval_env,
@@ -389,7 +387,7 @@ def main(argv):
   rollout = [state0]
 
   # Run evaluation rollout
-  for i in range(env_cfg.episode_length):
+  for _ in range(env_cfg.episode_length):
     act_rng, rng = jax.random.split(rng)
     ctrl, _ = jit_inference_fn(state.obs, act_rng)
     state = jit_step(state, ctrl)
