@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "playground"
-version = "0.0.3"
+version = "0.0.4"
 readme = "README.md"
 authors = [
     {name = "Google DeepMind", email = "mujoco@deepmind.com"},
@@ -101,11 +101,8 @@ warn_unused_configs = true
 exclude = ["scripts/", "mujoco_menagerie/"]
 
 [tool.pytest.ini_options]
-addopts = [
-    "--ignore=mujoco_menagerie",
-]
 testpaths = [
-    "tests",
+    "mujoco_playground/_src/",
 ]
 
 [tool.isort]
