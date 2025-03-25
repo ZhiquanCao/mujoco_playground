@@ -1,0 +1,503 @@
+<mujoco model="step">
+
+  
+  <compiler angle="radian" meshdir="../../../../../mujoco_menagerie/step/assets" eulerseq="zyx" autolimits="true" />
+  <option iterations="10" timestep="0.001" solver="CG" gravity="0 0 -9.81" />
+
+  <!-- 
+       2) DEFAULTS
+         - We define two classes:
+           (a) "visual": always contype="0" conaffinity="0"
+           (b) "collision": by default contype="1" conaffinity="1"
+         - By default, we put the default damping, friction, etc. you had.
+   -->
+  <default>
+    <default class="step">
+
+      <!-- Visual geoms: no collision -->
+      <default class="visual">
+        <geom contype="0" conaffinity="0" density="0" group="1"
+              material="visualgeom" />
+      </default>
+
+      <!-- Collision geoms: can be commented out if not needed -->
+      <default class="collision">
+        <geom contype="1" conaffinity="1" 
+              condim="3" 
+              friction="0.9 0.2 0.2"
+              solref="0.001 2" 
+              density="0" 
+              group="4"
+              rgba="0.2 0.6 0.2 0.3" />
+      </default>
+
+      <!-- Joints, Actuators, and Position defaults -->
+      <joint limited="true" damping="1" armature="0.1" frictionloss="0.1" />
+      <position inheritrange="1" kp="500" />
+      <motor ctrllimited="true" />
+      <equality solref="0.001 2" />
+    </default>
+  </default>
+
+  <!-- 
+       3) ASSETS
+         - All your meshes and materials
+   -->
+  <asset>
+    <mesh name="torso" file="torso.stl" />
+    <mesh name="left_hip_yaw_assembled_link" file="left_hip_yaw_assembled_link.stl" />
+    <mesh name="left_hip_roll_assembled_link" file="left_hip_roll_assembled_link.stl" />
+    <mesh name="left_thigh_link" file="left_thigh_link.stl" />
+    <mesh name="left_knee_motor" file="left_knee_motor.stl" />
+    <mesh name="left_shin_motor_down_link" file="left_shin_motor_down_link.stl" />
+    <mesh name="left_ankle_motor" file="left_ankle_motor.stl" />
+    <mesh name="left_foot_10_dof_link" file="left_foot_10_dof_link.stl" />
+
+    <mesh name="right_hip_yaw_assembled_link" file="right_hip_yaw_assembled_link.stl" />
+    <mesh name="right_hip_roll_assembled_link" file="right_hip_roll_assembled_link.stl" />
+    <mesh name="right_thigh_link" file="right_thigh_link.stl" />
+    <mesh name="right_knee_motor" file="right_knee_motor.stl" />
+    <mesh name="right_shin_motor_down_link" file="right_shin_motor_down_link.stl" />
+    <mesh name="right_ankle_motor" file="right_ankle_motor.stl" />
+    <mesh name="right_foot_10_dof_link" file="right_foot_10_dof_link.stl" />
+
+    <mesh name="additional_weight" file="additional_weight.stl" />
+
+    <texture name="texplane" type="2d" builtin="checker"
+             rgb1=".0 .0 .0" rgb2=".8 .8 .8"
+             width="100" height="100" />
+    <material name="matplane" reflectance="0."
+              texture="texplane" texrepeat="1 1" texuniform="true" />
+    <material name="visualgeom" rgba="0.5 0.9 0.2 1" />
+  </asset>
+
+  <!-- 
+       4) WORLDBODY
+         - Ground is made collidable
+         - We'll show how to give the torso a collision geom as well
+           (uncomment it if you want the torso to collide).
+   -->
+  <worldbody>
+    <!-- Collidable ground plane -->
+    <geom name="ground" type="plane"
+          pos="0 0 0" size="100 100 0.001" quat="1 0 0 0"
+          material="matplane"
+          condim="3"
+          contype="1" conaffinity="1" />
+
+    <light directional="true" diffuse="0.4 0.4 0.4" specular="0.1 0.1 0.1"
+           pos="0 0 5.0" dir="0 0 -1" castshadow="false" />
+    <light directional="true" diffuse="0.6 0.6 0.6" specular="0.2 0.2 0.2"
+           pos="0 0 4" dir="0 0 -1" />
+
+    <camera name="fixed"
+            pos="0 -3.0 1.2492035005171611"
+            xyaxes="1 0 0 0 0 1" />
+    <camera name="track" mode="trackcom"
+            pos="0 -3.0 1.2492035005171611"
+            xyaxes="1 0 0 0 0 1" />
+
+    <!-- - ROOT BODY  -->
+    <body name="root" pos="0 0 0.749203500517161" quat="1 0 0 0">
+      <freejoint name="root" />
+      <site name="imu" size="0.01" pos="0 0 0" />
+      <inertial
+        pos="-0.0100212716 0.0000135578 -0.0142364821"
+        mass="1.2245306367"
+        quat="-0.10803505 -0.6986577 0.69892007 -0.10824318"
+        diaginertia="0.0009952922 0.0087632716 0.0092824904"
+      />
+
+      <!-- ========== Torso Visual ========== -->
+      <geom class="visual"
+            name="torso"
+            type="mesh" mesh="torso"
+            pos="-8.85257e-08 5.76608e-05 1.80716e-09"
+            quat="1 3.44441e-11 -2.50723e-08 3.58869e-11"
+            rgba="0.792157 0.819608 0.933333 1" />
+
+      <!-- Optional torso collision: uncomment if you want the torso to collide
+           with the ground or other objects -->
+      
+      <geom class="collision"
+            name="torso_collision"
+            type="mesh" mesh="torso"
+            pos="-8.85257e-08 5.76608e-05 1.80716e-09"
+            quat="1 3.44441e-11 -2.50723e-08 3.58869e-11"
+            rgba="0.792157 0.819608 0.933333 0.3" />
+     
+
+      <!-- Additional weight purely visual -->
+      <geom class="visual"
+            name="additional_weight"
+            type="mesh" mesh="additional_weight"
+            pos="0.021893 6.42416e-05 0.653"
+            quat="1 3.4444e-11 -2.50723e-08 3.58869e-11"
+            rgba="0.647059 0.647059 0.647059 1" />
+
+      <!-- ==================== LEFT LEG ==================== -->
+      <body name="left_hip_yaw_assembled_link"
+            pos="-0.0154483 0.0900588 -0.041"
+            quat="0 0.999999 0.0013918 2.50724e-08">
+        <inertial pos="-0.0381991 -0.000556031 0.0498722"
+                  quat="0.992614 0.00930388 -0.120205 -0.0135103"
+                  mass="0.230401"
+                  diaginertia="0.000234409 0.000193369 0.000125349" />
+        <joint name="left_hip_yaw_joint" pos="0 0 0" axis="0 0 1" range="-0.349066 0.349066" />
+
+        <!-- Visual geom -->
+        <geom class="visual"
+              name="left_hip_yaw"
+              type="mesh" mesh="left_hip_yaw_assembled_link"
+              quat="0 -1 0 0"
+              rgba="0.627451 0.627451 0.627451 1" />
+
+        <!-- (Optional) collision geom for left_hip_yaw_assembled_link 
+             <geom class="collision"
+                   name="left_hip_yaw_collision"
+                   type="mesh" mesh="left_hip_yaw_assembled_link"
+                   quat="0 -1 0 0" />
+        -->
+
+        <body name="left_hip_roll_assembled_link"
+              pos="-0.0207145 1.21952e-06 0.0563028"
+              quat="0.499995 0.499995 0.500005 0.500005">
+          <inertial pos="-0.0381991 -0.000556031 0.0498722"
+                    quat="0.992614 0.00930388 -0.120205 -0.0135103"
+                    mass="0.230401"
+                    diaginertia="0.000234409 0.000193369 0.000125349" />
+          <joint name="left_hip_roll_joint" pos="0 0 0" axis="0 0 1" range="-0.349066 0.349066" />
+
+          <!-- Visual -->
+          <geom class="visual"
+                name="left_hip_roll"
+                type="mesh" mesh="left_hip_roll_assembled_link"
+                quat="0 -1 0 0"
+                rgba="0.627451 0.627451 0.627451 1" />
+
+          <!-- (Optional) collision 
+               <geom class="collision"
+                     name="left_hip_roll_collision"
+                     type="mesh" mesh="left_hip_roll_assembled_link"
+                     quat="0 -1 0 0" />
+          -->
+
+          <body name="left_thigh_link"
+                pos="-0.0207145 1.21952e-06 0.0563028"
+                quat="0.707107 6.36905e-06 -0.707107 6.36905e-06">
+            <inertial pos="-0.000360722 0.216483 0.00523348"
+                      quat="0.469025 0.522193 -0.532109 0.473487"
+                      mass="0.678365"
+                      diaginertia="0.00518913 0.0049981 0.000341861" />
+            <joint name="left_hip_pitch_joint" pos="0 0 0" axis="0 0 1" range="-1.5708 0.349066" />
+
+            <!-- Visual thigh -->
+            <geom class="visual"
+                  name="left_thigh"
+                  type="mesh" mesh="left_thigh_link"
+                  pos="0 0 0" quat="1 0 0 0"
+                  rgba="0.627451 0.627451 0.627451 1" />
+
+            <!-- (Optional) collision 
+                 <geom class="collision"
+                       name="left_thigh_collision"
+                       type="mesh" mesh="left_thigh_link"
+                       pos="0 0 0" quat="1 0 0 0" />
+            -->
+
+            <!-- Knee motor (visual) -->
+            <geom class="visual"
+                  name="left_knee_motor"
+                  type="mesh" mesh="left_knee_motor"
+                  pos="8.53217e-05 0.266945 -0.004547"
+                  quat="1 0 0 0"
+                  rgba="0.792157 0.819608 0.933333 1" />
+
+            <!-- (Optional) collision 
+                 <geom class="collision"
+                       name="left_knee_motor_collision"
+                       type="mesh" mesh="left_knee_motor"
+                       pos="8.53217e-05 0.266945 -0.004547"
+                       quat="1 0 0 0" />
+            -->
+
+            <body name="left_shin_motor_down_link"
+                  pos="8.53217e-05 0.266945 -0.005547"
+                  quat="0 -1 -2.50346e-08 0">
+              <inertial pos="-0.000360722 -0.216483 -0.00523348"
+                        quat="0.473487 0.532109 -0.522193 0.469025"
+                        mass="0.678365"
+                        diaginertia="0.00518913 0.0049981 0.000341861" />
+              <joint name="left_knee_joint" pos="0 0 0" axis="0 0 1" range="-0.698132 0" />
+
+              <!-- Visual shin -->
+              <geom class="visual"
+                    name="left_shin"
+                    type="mesh" mesh="left_shin_motor_down_link"
+                    quat="0 1 0 0"
+                    rgba="0.627451 0.627451 0.627451 1" />
+
+              <!-- (Optional) collision 
+                   <geom class="collision"
+                         name="left_shin_collision"
+                         type="mesh" mesh="left_shin_motor_down_link"
+                         quat="0 1 0 0" />
+              -->
+
+              <!-- Ankle motor (visual) -->
+              <geom class="visual"
+                    name="left_ankle_motor"
+                    type="mesh" mesh="left_ankle_motor"
+                    pos="8.53217e-05 -0.266945 0.004547"
+                    quat="0 1 0 0"
+                    rgba="0.792157 0.819608 0.933333 1" />
+
+              <!-- (Optional) collision 
+                   <geom class="collision"
+                         name="left_ankle_motor_collision"
+                         type="mesh" mesh="left_ankle_motor"
+                         pos="8.53217e-05 -0.266945 0.004547"
+                         quat="0 1 0 0" />
+              -->
+
+              <body name="left_foot_10_dof_link"
+                    pos="8.53217e-05 -0.266945 0.005547"
+                    quat="0 1 0 0">
+                <inertial pos="0.0122141 0.041306 0.00498826"
+                          quat="-0.30481 0.653084 -0.167476 0.672699"
+                          mass="0.177898"
+                          diaginertia="0.000293598 0.000250371 0.000124016" />
+                <joint name="left_ankle_joint" pos="0 0 0" axis="0 0 1" range="-0.698132 0.698132" />
+
+                <!-- Visual foot -->
+                <geom class="visual"
+                      name="left_foot"
+                      type="mesh" mesh="left_foot_10_dof_link"
+                      pos="0 0 0.01" quat="1 0 0 0"
+                      rgba="0.627451 0.627451 0.627451 1" />
+
+                <!-- Collision foot: keep uncommented for ground contact -->
+                <geom class="collision"
+                      name="left_foot_collision"
+                      type="mesh" mesh="left_foot_10_dof_link"
+                      pos="0 0 0.01" quat="1 0 0 0"
+                      rgba="0.627451 0.627451 0.627451 0.3" />
+
+                <site name="left_foot" quat="1 0 0 0" />
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+
+      <!-- ==================== RIGHT LEG ==================== -->
+      <body name="right_hip_yaw_assembled_link"
+            pos="-0.0154461 -0.0899447 -0.041"
+            quat="2.50723e-08 0 1 3.44441e-11">
+        <inertial pos="0.0381995 -0.000557154 0.0499698"
+                  quat="0.992644 0.0105754 0.119918 0.0128339"
+                  mass="0.230395"
+                  diaginertia="0.000234665 0.000193652 0.000125354" />
+        <joint name="right_hip_yaw_joint" pos="0 0 0" axis="0 0 1" range="-0.349066 0.349066" />
+
+        <!-- Visual -->
+        <geom class="visual"
+              name="right_hip_yaw"
+              type="mesh" mesh="right_hip_yaw_assembled_link"
+              quat="0 -1 0 0"
+              rgba="0.627451 0.627451 0.627451 1" />
+
+        <!-- (Optional) collision 
+             <geom class="collision"
+                   name="right_hip_yaw_collision"
+                   type="mesh" mesh="right_hip_yaw_assembled_link"
+                   quat="0 -1 0 0" />
+        -->
+
+        <body name="right_hip_roll_assembled_link"
+              pos="0.0207145 -1.21925e-06 0.0562972"
+              quat="0.500005 0.500005 -0.499995 -0.499995">
+          <inertial pos="0.0381995 -0.000557154 0.0499698"
+                    quat="0.992644 0.0105754 0.119918 0.0128339"
+                    mass="0.230395"
+                    diaginertia="0.000234665 0.000193652 0.000125354" />
+          <joint name="right_hip_roll_joint" pos="0 0 0" axis="0 0 1" range="-0.349066 0.349066" />
+
+          <geom class="visual"
+                name="right_hip_roll"
+                type="mesh" mesh="right_hip_roll_assembled_link"
+                quat="0 -1 0 0"
+                rgba="0.627451 0.627451 0.627451 1" />
+
+          <!-- (Optional) collision 
+               <geom class="collision"
+                     name="right_hip_roll_collision"
+                     type="mesh" mesh="right_hip_roll_assembled_link"
+                     quat="0 -1 0 0" />
+          -->
+
+          <body name="right_thigh_link"
+                pos="0.0207145 -1.21925e-06 0.0562972"
+                quat="6.36906e-06 -0.707107 -6.36906e-06 -0.707107">
+            <inertial pos="0.000402509 -0.216483 0.0052335"
+                      quat="0.532059 0.473532 -0.468979 0.522244"
+                      mass="0.678364"
+                      diaginertia="0.00518909 0.00499805 0.000341861" />
+            <joint name="right_hip_pitch_joint" pos="0 0 0" axis="0 0 1" range="-0.349066 1.5708" />
+
+            <!-- Visual thigh -->
+            <geom class="visual"
+                  name="right_thigh"
+                  type="mesh" mesh="right_thigh_link"
+                  rgba="0.627451 0.627451 0.627451 1" />
+
+            <!-- (Optional) collision 
+                 <geom class="collision"
+                       name="right_thigh_collision"
+                       type="mesh" mesh="right_thigh_link" />
+            -->
+
+            <!-- Knee motor (visual) -->
+            <geom class="visual"
+                  name="right_knee_motor"
+                  type="mesh" mesh="right_knee_motor"
+                  pos="-3.37919e-05 -0.266945 -0.004547"
+                  quat="0 0 0 1"
+                  rgba="0.792157 0.819608 0.933333 1" />
+
+            <!-- (Optional) collision 
+                 <geom class="collision"
+                       name="right_knee_motor_collision"
+                       type="mesh" mesh="right_knee_motor"
+                       pos="-3.37919e-05 -0.266945 -0.004547"
+                       quat="0 0 0 1" />
+            -->
+
+            <body name="right_shin_motor_down_link"
+                  pos="-3.37919e-05 -0.266945 -0.005547"
+                  quat="0 1 -5.01449e-08 0">
+              <inertial pos="0.000398268 0.216483 -0.0052335"
+                        quat="0.522225 0.468978 -0.473534 0.532077"
+                        mass="0.678364"
+                        diaginertia="0.00518909 0.00499806 0.000341862" />
+              <joint name="right_knee_joint" pos="0 0 0" axis="0 0 1" range="0 0.698132" />
+
+              <!-- Visual shin -->
+              <geom class="visual"
+                    name="right_shin"
+                    type="mesh" mesh="right_shin_motor_down_link"
+                    quat="0 1 0 0"
+                    rgba="0.627451 0.627451 0.627451 1" />
+
+              <!-- (Optional) collision 
+                   <geom class="collision"
+                         name="right_shin_collision"
+                         type="mesh" mesh="right_shin_motor_down_link"
+                         quat="0 1 0 0" />
+              -->
+
+              <!-- Ankle motor (visual) -->
+              <geom class="visual"
+                    name="right_ankle_motor"
+                    type="mesh" mesh="right_ankle_motor"
+                    pos="-4.03551e-05 0.266945 0.004547"
+                    quat="0 0 1 0"
+                    rgba="0.792157 0.819608 0.933333 1" />
+
+              <!-- (Optional) collision 
+                   <geom class="collision"
+                         name="right_ankle_motor_collision"
+                         type="mesh" mesh="right_ankle_motor"
+                         pos="-4.03551e-05 0.266945 0.004547"
+                         quat="0 0 1 0" />
+              -->
+
+              <body name="right_foot_10_dof_link"
+                    pos="-4.03551e-05 0.266945 0.005547"
+                    quat="0 -1 0 0">
+                <inertial pos="0.012214 -0.041306 0.00498823"
+                          quat="0.304811 0.653084 0.167476 0.672698"
+                          mass="0.177898"
+                          diaginertia="0.000293596 0.000250368 0.000124016" />
+                <joint name="right_ankle_joint" pos="0 0 0" axis="0 0 1" range="-0.698132 0.698132" />
+
+                <!-- Visual foot -->
+                <geom class="visual"
+                      name="right_foot"
+                      type="mesh" mesh="right_foot_10_dof_link"
+                      pos="0 0 0.01" quat="0 1 0 0"
+                      rgba="0.627451 0.627451 0.627451 1" />
+
+                <!-- Collision foot: keep for ground contact -->
+                <geom class="collision"
+                      name="right_foot_collision"
+                      type="mesh" mesh="right_foot_10_dof_link"
+                      pos="0 0 0.01" quat="0 1 0 0"
+                      rgba="0.627451 0.627451 0.627451 0.3" />
+
+                <site name="right_foot" quat="0 1 0 0" />
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+
+  <!-- 
+       5) ACTUATORS
+         - Same as your original, plus example of increased kp on knee
+   -->
+  <actuator>
+    <position name="left_hip_yaw_joint" joint="left_hip_yaw_joint" ctrlrange="-0.349066 0.349066" kp="15"/>
+    <position name="left_hip_roll_joint" joint="left_hip_roll_joint" ctrlrange="-0.349066 0.349066" kp="15"/>
+    <position name="left_hip_pitch_joint" joint="left_hip_pitch_joint" ctrlrange="-1.5708 0.349066" kp="15"/>
+    <position name="left_knee_joint" joint="left_knee_joint" ctrlrange="-0.698132 0" kp="15"/>
+    <position name="left_ankle_joint" joint="left_ankle_joint" ctrlrange="-0.698132 0.698132" kp="15"/>
+    
+    <position name="right_hip_yaw_joint" joint="right_hip_yaw_joint" ctrlrange="-0.349066 0.349066" kp="15"/>
+    <position name="right_hip_roll_joint" joint="right_hip_roll_joint" ctrlrange="-0.349066 0.349066" kp="15"/>
+    <position name="right_hip_pitch_joint" joint="right_hip_pitch_joint" ctrlrange="-0.349066 1.5708" kp="15"/>
+    <position name="right_knee_joint" joint="right_knee_joint" ctrlrange="0 0.698132" kp="15"/>
+    <position name="right_ankle_joint" joint="right_ankle_joint" ctrlrange="-0.698132 0.698132" kp="15"/>
+  </actuator>
+
+  <!-- 
+       6) SENSORS
+         - As in your original
+   -->
+  <sensor>
+    <gyro          site="imu" name="gyro"/>
+    <velocimeter   site="imu" name="local_linvel"/>
+    <accelerometer site="imu" name="accelerometer"/>
+    <framezaxis    objtype="site" objname="imu" name="upvector"/>
+    <framexaxis    objtype="site" objname="imu" name="forwardvector"/>
+    <framelinvel   objtype="site" objname="imu" name="global_linvel"/>
+    <frameangvel   objtype="site" objname="imu" name="global_angvel"/>
+    <framepos      objtype="site" objname="imu" name="position"/>
+    <framequat     objtype="site" objname="imu" name="orientation"/>
+
+    <framelinvel objtype="site" objname="left_foot" name="left_foot_global_linvel"/>
+    <framelinvel objtype="site" objname="right_foot" name="right_foot_global_linvel"/>
+    <framexaxis  objtype="site" objname="left_foot" name="left_foot_upvector"/>
+    <framexaxis  objtype="site" objname="right_foot" name="right_foot_upvector"/>
+    <framepos    objtype="site" objname="left_foot" name="left_foot_pos"/>
+    <framepos    objtype="site" objname="right_foot" name="right_foot_pos"/>
+    <force       site="left_foot" name="left_foot_force"/>
+    <force       site="right_foot" name="right_foot_force"/>
+  </sensor>
+
+  <!-- 
+       7) KEYFRAME (OPTIONAL)
+   -->
+  <keyframe>
+    <key name="home"
+         qpos="0 0 0.7492035
+               1 0 0 0
+               0 0 0 0 0
+               0 0 0 0 0"
+         ctrl="0 0 0 0 0
+               0 0 0 0 0"/>
+  </keyframe>
+
+</mujoco>
