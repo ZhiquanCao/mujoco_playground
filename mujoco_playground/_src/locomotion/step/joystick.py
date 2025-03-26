@@ -759,7 +759,6 @@ class Joystick(step_base.StepEnv):
       command: jax.Array,
   ) -> jax.Array:
     # Reward for tracking the desired foot height.
-    del commands  # delete to imitate Berkeley's code
     foot_pos = data.site_xpos[self._feet_site_id]
     foot_z = foot_pos[..., -1]
     rz = gait.get_rz(phase, swing_height=foot_height)

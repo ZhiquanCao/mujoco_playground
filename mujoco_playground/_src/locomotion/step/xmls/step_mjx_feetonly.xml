@@ -1,8 +1,8 @@
 <mujoco model="step">
 
   
-  <compiler angle="radian" meshdir="../../../../../mujoco_menagerie/step/assets" eulerseq="zyx" autolimits="true" />
-  <option iterations="10" timestep="0.001" solver="CG" gravity="0 0 -9.81" />
+  <compiler angle="radian" meshdir="assets" eulerseq="zyx" autolimits="true" />
+  <option iterations="3" ls_iterations="5" timestep="0.002" solver="CG" gravity="0 0 -9.81" integrator="Euler" />
 
   <!-- 
        2) DEFAULTS
@@ -32,8 +32,7 @@
       </default>
 
       <!-- Joints, Actuators, and Position defaults -->
-      <joint limited="true" damping="1" armature="0.1" frictionloss="0.1" />
-      <position inheritrange="1" kp="500" />
+      <joint limited="true" actuatorfrcrange="-8 8" damping="1" armature="0.007" frictionloss="0.1" />
       <motor ctrllimited="true" />
       <equality solref="0.001 2" />
     </default>
@@ -98,8 +97,8 @@
             xyaxes="1 0 0 0 0 1" />
 
     <!-- - ROOT BODY  -->
-    <body name="root" pos="0 0 0.749203500517161" quat="1 0 0 0">
-      <freejoint name="root" />
+    <body name="torso" childclass="step" pos="0 0 0.749203500517161" quat="1 0 0 0">
+      <freejoint name="torso" />
       <site name="imu" size="0.01" pos="0 0 0" />
       <inertial
         pos="-0.0100212716 0.0000135578 -0.0142364821"
@@ -119,13 +118,18 @@
       <!-- Optional torso collision: uncomment if you want the torso to collide
            with the ground or other objects -->
       
-      <geom class="collision"
+      <!-- <geom class="collision"
             name="torso_collision"
             type="mesh" mesh="torso"
             pos="-8.85257e-08 5.76608e-05 1.80716e-09"
             quat="1 3.44441e-11 -2.50723e-08 3.58869e-11"
-            rgba="0.792157 0.819608 0.933333 0.3" />
+            rgba="0.792157 0.819608 0.933333 0.3" /> -->
      
+     <geom class="collision"
+            name="torso_collision"
+            type="box" size="0.1 0.05 0.01"
+            pos="0 0 0.01" quat="0 1 0 0"
+            rgba="0.627451 0.627451 0.627451 0.3" />
 
       <!-- Additional weight purely visual -->
       <geom class="visual"
@@ -276,12 +280,17 @@
                       pos="0 0 0.01" quat="1 0 0 0"
                       rgba="0.627451 0.627451 0.627451 1" />
 
-                <!-- Collision foot: keep uncommented for ground contact -->
                 <geom class="collision"
+                      name="left_foot_collision"
+                      type="box" size="0.0676 0.035 0.007"
+                      pos="0.0166 0.05 0.01" quat="0.7071 0.7071 0 0"
+                      rgba="0.627451 0.627451 0.627451 0.3" />
+
+                <!-- <geom class="collision"
                       name="left_foot_collision"
                       type="mesh" mesh="left_foot_10_dof_link"
                       pos="0 0 0.01" quat="1 0 0 0"
-                      rgba="0.627451 0.627451 0.627451 0.3" />
+                      rgba="0.627451 0.627451 0.627451 0.3" /> -->
 
                 <site name="left_foot" quat="1 0 0 0" />
               </body>
@@ -382,7 +391,6 @@
                         diaginertia="0.00518909 0.00499806 0.000341862" />
               <joint name="right_knee_joint" pos="0 0 0" axis="0 0 1" range="0 0.698132" />
 
-              <!-- Visual shin -->
               <geom class="visual"
                     name="right_shin"
                     type="mesh" mesh="right_shin_motor_down_link"
@@ -396,7 +404,6 @@
                          quat="0 1 0 0" />
               -->
 
-              <!-- Ankle motor (visual) -->
               <geom class="visual"
                     name="right_ankle_motor"
                     type="mesh" mesh="right_ankle_motor"
@@ -421,19 +428,23 @@
                           diaginertia="0.000293596 0.000250368 0.000124016" />
                 <joint name="right_ankle_joint" pos="0 0 0" axis="0 0 1" range="-0.698132 0.698132" />
 
-                <!-- Visual foot -->
                 <geom class="visual"
                       name="right_foot"
                       type="mesh" mesh="right_foot_10_dof_link"
                       pos="0 0 0.01" quat="0 1 0 0"
                       rgba="0.627451 0.627451 0.627451 1" />
 
-                <!-- Collision foot: keep for ground contact -->
                 <geom class="collision"
+                      name="right_foot_collision"
+                      type="box" size="0.0676 0.035 0.007"
+                      pos="0.0166 -0.05 0.01" quat="0.7071 0.7071 0 0"
+                      rgba="0.627451 0.627451 0.627451 0.3" />
+
+                <!-- <geom class="collision"
                       name="right_foot_collision"
                       type="mesh" mesh="right_foot_10_dof_link"
                       pos="0 0 0.01" quat="0 1 0 0"
-                      rgba="0.627451 0.627451 0.627451 0.3" />
+                      rgba="0.627451 0.627451 0.627451 0.3" /> -->
 
                 <site name="right_foot" quat="0 1 0 0" />
               </body>
@@ -444,10 +455,6 @@
     </body>
   </worldbody>
 
-  <!-- 
-       5) ACTUATORS
-         - Same as your original, plus example of increased kp on knee
-   -->
   <actuator>
     <position name="left_hip_yaw_joint" joint="left_hip_yaw_joint" ctrlrange="-0.349066 0.349066" kp="15"/>
     <position name="left_hip_roll_joint" joint="left_hip_roll_joint" ctrlrange="-0.349066 0.349066" kp="15"/>
@@ -462,10 +469,6 @@
     <position name="right_ankle_joint" joint="right_ankle_joint" ctrlrange="-0.698132 0.698132" kp="15"/>
   </actuator>
 
-  <!-- 
-       6) SENSORS
-         - As in your original
-   -->
   <sensor>
     <gyro          site="imu" name="gyro"/>
     <velocimeter   site="imu" name="local_linvel"/>
@@ -483,13 +486,10 @@
     <framexaxis  objtype="site" objname="right_foot" name="right_foot_upvector"/>
     <framepos    objtype="site" objname="left_foot" name="left_foot_pos"/>
     <framepos    objtype="site" objname="right_foot" name="right_foot_pos"/>
-    <force       site="left_foot" name="left_foot_force"/>
-    <force       site="right_foot" name="right_foot_force"/>
+    <!-- <force       site="left_foot" name="left_foot_force"/>
+    <force       site="right_foot" name="right_foot_force"/> -->
   </sensor>
 
-  <!-- 
-       7) KEYFRAME (OPTIONAL)
-   -->
   <keyframe>
     <key name="home"
          qpos="0 0 0.7492035
