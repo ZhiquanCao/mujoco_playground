@@ -2,6 +2,9 @@
 __pycache__
 *.egg-info
 .venv
+.vscode
+*.pkl
+*.onnx
 MUJOCO_LOG.TXT
 mujoco_menagerie
 checkpoints/
