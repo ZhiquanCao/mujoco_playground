@@ -47,8 +47,8 @@
     <geom name="ground" type="plane" pos="0 0 0" size="100 100 0.001" quat="1 0 0 0" material="matplane" condim="3" conaffinity="15" />
     <camera name="fixed" pos="0 -3.0 1.2492035005171611" xyaxes="1 0 0 0 0 1" />
     <camera name="track" mode="trackcom" pos="0 -3.0 1.2492035005171611" xyaxes="1 0 0 0 0 1" />
-    <body name="root" pos="0 0 0.749203500517161" quat="1 0 0 0" childclass="step">
-      <freejoint name="root" />
+    <body name="torso" pos="0 0 0.749203500517161" quat="1 0 0 0" childclass="step">
+      <freejoint name="torso" />
       <site name="imu" size="0.01" pos="0 0 0" />
       <inertial
         pos="-0.0100212716 0.0000135578 -0.0142364821"
